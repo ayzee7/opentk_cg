@@ -5,14 +5,18 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="OpenAL.Soft" Version="1.23.1" />
     <PackageReference Include="OpenTK" Version="4.9.4" />
+    <PackageReference Include="OpenTK.Audio.OpenAL" Version="4.9.4" />
     <PackageReference Include="StbImageSharp" Version="2.30.15" />
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Sound\" />
     <Folder Include="Textures\" />
     <Folder Include="Shaders\" />
   </ItemGroup>
