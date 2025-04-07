@@ -1,17 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OpenTK.Audio.OpenAL;
-using OpenTK.Graphics.OpenGL4;
+﻿using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using ErrorCode = OpenTK.Graphics.OpenGL4.ErrorCode;
 using StbImageSharp;
-using System.Diagnostics;
+using opentk_cg.Common;
 
 namespace opentk_cg
 {
@@ -47,20 +41,36 @@ namespace opentk_cg
             new Vector3(0.5f, 0.5f, -0.5f),
         };
 
-        List<Vector3> bg_vertices = new List<Vector3>()
+        List<Vector3> bg1_vertices = new List<Vector3>()
         {
-            new Vector3(-30f, -20f, -20f),
+            new Vector3(-30f, -8f, -20f),
             new Vector3(-30f, 20f, -20f),
             new Vector3(30f, 20f, -20f),
-            new Vector3(30f, -20f, -20f)
+            new Vector3(30f, -8f, -20f)
+        };
+
+        List<Vector3> bg_vertices = new List<Vector3>()
+        {
+            new Vector3(-100f, 0f, 10f),
+            new Vector3(-100f, 0f, -300f),
+            new Vector3(100f, 0f, -300f),
+            new Vector3(100f, 0f, 10f)
         };
 
         List<Vector3> tree_vertices = new List<Vector3>()
         {
-            new Vector3(-1.5f, -1f, 0f),
-            new Vector3(-1.5f, 3f, 0f),
-            new Vector3(1.5f, 3f, 0f),
-            new Vector3(1.5f, -1f, 0f)
+            new Vector3(-2f, 0f, 0f),
+            new Vector3(-2f, 4f, 0f),
+            new Vector3(2f, 4f, 0f),
+            new Vector3(2f, 0f, 0f)
+        };
+
+        List<Vector3> road_vertices = new List<Vector3>()
+        {
+            new Vector3(-30f, 0.01f, 10f),
+            new Vector3(-30f, 0.01f, -100f),
+            new Vector3(30f, 0.01f, -100f),
+            new Vector3(30f, 0.01f, 10f)
         };
 
         uint[] cube_indices =
@@ -121,17 +131,80 @@ namespace opentk_cg
             new Vector2(1f, 0f),
         };
 
-        int VAO, bgVAO, treeVAO;
-        int VBO, bgVBO, treeVBO;
-        int EBO, bgEBO, treeEBO;
+        List<Vector2> grassTexCoords = new List<Vector2>()
+        {
+            new Vector2(-4f, -4f),
+            new Vector2(-4f, 4f),
+            new Vector2(4f, 4f),
+            new Vector2(4f, -4f),
+        };
+
+        float[] skyboxVertices = {
+            // positions          
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+             1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+             1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            -1.0f,  1.0f, -1.0f,
+             1.0f,  1.0f, -1.0f,
+             1.0f,  1.0f,  1.0f,
+             1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+             1.0f, -1.0f, -1.0f,
+             1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+             1.0f, -1.0f,  1.0f
+        };
+
+        List<string> faces = new List<string>()
+        {
+            "right.bmp",
+            "left.bmp",
+            "top.bmp",
+            "bottom.bmp",
+            "front.bmp",
+            "back.bmp"
+        };
+
+        int VAO, bgVAO, treeVAO, roadVAO;
+        int VBO, bgVBO, treeVBO, roadVBO;
+        int EBO, bgEBO, treeEBO, roadEBO;
         Shader shaderProgram = new Shader();
 
-        int textureID, bgTextureID, treeTextureID;
-        int textureVBO, bgTextureVBO, treeTextureVBO;
+        int textureID, bgTextureID, treeTextureID, roadTextureID;
+        int textureVBO, bgTextureVBO, treeTextureVBO, roadTextureVBO;
 
         float tree1Z, tree2Z, tree3Z, tree4Z, tree5Z;
-        int treeZMin = -45;
-        int treeZMax = -20;
+        int treeZMin = -300;
+        int treeZMax = -200;
         float tree1X, tree2X, tree3X, tree4X, tree5X;
         int treeXMin = -3;
         int treeXMax = 3;
@@ -140,14 +213,23 @@ namespace opentk_cg
         bool isStuck = false;
         bool isHit = false;
 
-        Timer timer; 
+        MyTimer timer; 
 
         Camera camera;
         Movement move;
 
-        Vector3 cameraPos = new Vector3(0f, 3f, 7.5f);
+        Vector3 cameraPos = new Vector3(0f, 3f, 8f);
+        //Vector3 cameraPos = new Vector3(0f, 0f, 0f);
 
         OpenALPlayer player;
+
+        Model catModel;
+        Shader catShader = new Shader();
+
+        int skyboxTexture, skyboxVAO, skyboxVBO;
+        Shader skyboxShader = new Shader();
+
+        int LevelCounter = 0;
 
         bool floatEquals(float a, float b)
         {
@@ -170,24 +252,29 @@ namespace opentk_cg
         {
             camera = new Camera(Size.X, Size.Y, cameraPos);
             WindowState = WindowState.Maximized;
-            Title = "Tree Dodge Game";
+            Title = "Tree Dodge Game OpenGL " + GL.GetString(StringName.Version);
             this.height = Size.X;
             this.width = Size.Y;
         }
 
         protected override void OnLoad()
         {
+            base.OnLoad();
+            Console.WriteLine(GL.GetString(StringName.Renderer));
             ErrorCode error = GL.GetError();
 
-            OnLoadRender(ref VAO,
-                         ref VBO,
-                         ref EBO,
-                         ref textureID,
-                         ref textureVBO,
-                         ref cube_vertices,
-                         ref cube_indices,
-                         ref cube_coords,
-                         "../../../Textures/player.jpg");
+            catModel = new Model("../../../Resources/Cat/cat.obj");
+            catShader.LoadShader("catShader.vert", "catShader.frag");
+
+            //OnLoadRender(ref VAO,
+            //             ref VBO,
+            //             ref EBO,
+            //             ref textureID,
+            //             ref textureVBO,
+            //             ref cube_vertices,
+            //             ref cube_indices,
+            //             ref cube_coords,
+            //             "../../../Textures/player.jpg");
             OnLoadRender(ref bgVAO,
                          ref bgVBO,
                          ref bgEBO,
@@ -195,8 +282,8 @@ namespace opentk_cg
                          ref bgTextureVBO,
                          ref bg_vertices,
                          ref indices2d,
-                         ref texCoords2d,
-                         "../../../Textures/background.jpg");
+                         ref grassTexCoords,
+                         "../../../Textures/grass.jpg");
             OnLoadRender(ref treeVAO,
                          ref treeVBO,
                          ref treeEBO,
@@ -206,6 +293,15 @@ namespace opentk_cg
                          ref indices2d,
                          ref texCoords2d,
                          "../../../Textures/tree.png");
+            OnLoadRender(ref roadVAO,
+                         ref roadVBO,
+                         ref roadEBO,
+                         ref roadTextureID,
+                         ref roadTextureVBO,
+                         ref road_vertices,
+                         ref indices2d,
+                         ref texCoords2d,
+                         "../../../Textures/road.jpg");
 
             tree1Z = rand.Next(treeZMin, treeZMax);
             tree2Z = rand.Next(treeZMin, treeZMax);
@@ -222,85 +318,141 @@ namespace opentk_cg
             tree4X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
             tree5X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
 
-            shaderProgram.LoadShader();
+            shaderProgram.LoadShader("shader.vert", "shader.frag");
 
             GL.Enable(EnableCap.DepthTest);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
+            GL.Enable(EnableCap.TextureCubeMapSeamless);
 
             move = new Movement(Vector3.Zero);
 
             player = new OpenALPlayer();
             player.StartPlayback();
 
-            timer = new Timer();
+            timer = new MyTimer(GL.GetString(StringName.Renderer));
             timer.Start();
 
-            base.OnLoad();
-            
+            skyboxVAO = GL.GenVertexArray();
+            skyboxVBO = GL.GenBuffer();
+            GL.BindVertexArray(skyboxVAO);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, skyboxVBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, skyboxVertices.Length * sizeof(float), skyboxVertices, BufferUsageHint.StaticDraw);
+
+            // Layout 0 - позиции (vec3)
+            GL.EnableVertexAttribArray(0);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+
+            // Отвязать
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            GL.BindVertexArray(0);
+            skyboxTexture = loadCubemap(faces);
+
+            skyboxShader.LoadShader("skyboxShader.vert", "skyboxShader.frag");
+            //CursorState = CursorState.Grabbed;
         }
 
         protected override void OnUnload()
         {
-            ClearObject(VAO, VBO, EBO, textureID);
-            ClearObject(bgVAO, bgVBO, bgEBO, bgTextureID);
-            ClearObject(treeVAO, treeVBO, treeEBO, treeTextureID);
-            shaderProgram.DeleteShader();
-            player.StopPlayback();
             base.OnUnload();
+            ClearObject(VAO, VBO, EBO, textureID, textureVBO);
+            ClearObject(bgVAO, bgVBO, bgEBO, bgTextureID, bgTextureVBO);
+            ClearObject(treeVAO, treeVBO, treeEBO, treeTextureID, treeTextureVBO);
+            ClearObject(roadVAO, roadVBO, roadEBO, roadTextureID, roadTextureVBO);
+            shaderProgram.DeleteShader();
+            catShader.DeleteShader();
+            skyboxShader.DeleteShader();
+            player.StopPlayback();
         }
 
-        void ClearObject(int vao, int vbo, int ebo, int textureid)
+        void ClearObject(int vao, int vbo, int ebo, int textureid, int texturevbo)
         {
             GL.DeleteBuffer(vao);
             GL.DeleteBuffer(vbo);
             GL.DeleteBuffer(ebo);
             GL.DeleteTexture(textureid);
+            GL.DeleteBuffer(texturevbo);
         }
 
         protected override void OnRenderFrame(FrameEventArgs args)
         {
-            if (!(move.position.X > tree1X - 1f && move.position.X < tree1X + 1f && tree1Z > -0.5f && tree1Z < 0.5f || 
-                move.position.X > tree2X - 1f && move.position.X < tree2X + 1f && tree2Z > -0.5f && tree2Z < 0.5f || 
-                move.position.X > tree3X - 1f && move.position.X < tree3X + 1f && tree3Z > -0.5f && tree3Z < 0.5f ||
-                move.position.X > tree4X - 1f && move.position.X < tree4X + 1f && tree4Z > -0.5f && tree4Z < 0.5f ||
-                move.position.X > tree5X - 1f && move.position.X < tree5X + 1f && tree5Z > -0.5f && tree5Z < 0.5f))
+            if (!(move.position.X > tree1X - 0.5f && move.position.X < tree1X + 0.5f && tree1Z > move.position.Z - 0.5f && tree1Z < move.position.Z + 0.5f || 
+                move.position.X > tree2X - 0.5f && move.position.X < tree2X + 0.5f && tree2Z > move.position.Z - 0.5f && tree2Z < move.position.Z + 0.5f || 
+                move.position.X > tree3X - 0.5f && move.position.X < tree3X + 0.5f && tree3Z > move.position.Z - 0.5f && tree3Z < move.position.Z + 0.5f ||
+                move.position.X > tree4X - 0.5f && move.position.X < tree4X + 0.5f && tree4Z > move.position.Z - 0.5f && tree4Z < move.position.Z + 0.5f ||
+                move.position.X > tree5X - 0.5f && move.position.X < tree5X + 0.5f && tree5Z > move.position.Z - 0.5f && tree5Z < move.position.Z + 0.5f))
             {
-                if (tree1Z > cameraPos.Z)
+                if (tree1Z > camera.position.Z)
                 {
-                    tree1Z = rand.Next(treeZMin, treeZMax);
+                    tree1Z = rand.Next(treeZMin + 100 + (int)move.position.Z, treeZMax + 100 + (int)move.position.Z);
                     tree1X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
                 }
-                if (tree2Z > cameraPos.Z)
+                if (tree2Z > camera.position.Z)
                 {
-                    tree2Z = rand.Next(treeZMin, treeZMax);
+                    tree2Z = rand.Next(treeZMin + 100 + (int)move.position.Z, treeZMax + 100 + (int)move.position.Z);
                     tree2X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
                 }
-                if (tree3Z > cameraPos.Z)
+                if (tree3Z > camera.position.Z)
                 {
-                    tree3Z = rand.Next(treeZMin, treeZMax);
+                    tree3Z = rand.Next(treeZMin + 100 + (int)move.position.Z, treeZMax + 100 + (int)move.position.Z);
                     tree3X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
                 }
-                if (tree4Z > cameraPos.Z)
+                if (tree4Z > camera.position.Z)
                 {
-                    tree4Z = rand.Next(treeZMin, treeZMax);
+                    tree4Z = rand.Next(treeZMin + 100 + (int)move.position.Z, treeZMax + 100 + (int)move.position.Z);
                     tree4X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
                 }
-                if (tree5Z > cameraPos.Z)
+                if (tree5Z > camera.position.Z)
                 {
-                    tree5Z = rand.Next(treeZMin, treeZMax);
+                    tree5Z = rand.Next(treeZMin + 100 + (int)move.position.Z, treeZMax + 100 + (int)move.position.Z);
                     tree5X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
+                }
+                if (move.position.Z < -110f * (LevelCounter + 1))
+                {
+                    LevelCounter++;
                 }
                 treesZ_sorted = [tree1Z, tree2Z, tree3Z, tree4Z, tree5Z];
                 Array.Sort(treesZ_sorted);
 
-                GL.ClearColor(0.3f, 0.3f, 1f, 1f);
+                //GL.ClearColor(0.3f, 0.3f, 1f, 1f);
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-                shaderProgram.UseShader();
 
                 Matrix4 model;
-                Matrix4 view = camera.GetViewMatrix();
+                Matrix4 view = camera.GetViewMatrix(move);
+                //Matrix4 view = camera.GetViewMatrix();
                 Matrix4 projection = camera.GetProjection();
+
+                //  render skybox
+                GL.DepthFunc(DepthFunction.Lequal);
+                skyboxShader.UseShader();
+                Matrix4 skyboxView = new Matrix4(new Matrix3(view));
+                int skyboxViewLocation = GL.GetUniformLocation(skyboxShader.shaderHandle, "view");
+                int skyboxProjectionLocation = GL.GetUniformLocation(skyboxShader.shaderHandle, "projection");
+                GL.UniformMatrix4(skyboxViewLocation, false, ref skyboxView);
+                GL.UniformMatrix4(skyboxProjectionLocation, false, ref projection);
+                GL.BindVertexArray(skyboxVAO);
+                GL.ActiveTexture(TextureUnit.Texture0);
+                GL.BindTexture(TextureTarget.TextureCubeMap, skyboxTexture);
+                GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+                GL.BindVertexArray(0);
+                GL.DepthFunc(DepthFunction.Less);
+
+                //  render cat model
+                catShader.UseShader();
+
+                int catModelLocation = GL.GetUniformLocation(catShader.shaderHandle, "model");
+                int catViewLocation = GL.GetUniformLocation(catShader.shaderHandle, "view");
+                int catProjectionLocation = GL.GetUniformLocation(catShader.shaderHandle, "projection");
+
+                GL.UniformMatrix4(catViewLocation, true, ref view);
+                GL.UniformMatrix4(catProjectionLocation, true, ref projection);
+
+                model = move.GetModel();
+                GL.UniformMatrix4(catModelLocation, true, ref model);
+                catModel.Draw(catShader);
+
+                //  render everything else
+                shaderProgram.UseShader();
 
                 int modelLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "model");
                 int viewLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "view");
@@ -309,15 +461,22 @@ namespace opentk_cg
                 GL.UniformMatrix4(viewLocation, true, ref view);
                 GL.UniformMatrix4(projectionLocation, true, ref projection);
 
-                // end init
-
                 //  render bg
                 model = Matrix4.Identity;
+                model *= Matrix4.CreateTranslation(0f, 0f, 0f - 110f * LevelCounter);
+                RenderObject(roadVAO, roadEBO, model, roadTextureID, modelLocation, indices2d);
                 RenderObject(bgVAO, bgEBO, model, bgTextureID, modelLocation, indices2d);
+                model = Matrix4.Identity;
+                model *= Matrix4.CreateTranslation(0f, 0f, 0f - 110f * (LevelCounter + 1));
+                RenderObject(roadVAO, roadEBO, model, roadTextureID, modelLocation, indices2d);
+                RenderObject(bgVAO, bgEBO, model, bgTextureID, modelLocation, indices2d);
+                model = Matrix4.Identity;
+                model *= Matrix4.CreateTranslation(0f, 0f, 0f - 110f * (LevelCounter + 2));
+                RenderObject(roadVAO, roadEBO, model, roadTextureID, modelLocation, indices2d);
 
                 //  render cube
-                model = move.GetModel();
-                RenderObject(VAO, EBO, model, textureID, modelLocation, cube_indices);
+                //model = move.GetModel();
+                //RenderObject(VAO, EBO, model, textureID, modelLocation, cube_indices);
 
                 //  render trees
                 for (int i = 0; i < treesZ_sorted.Length; i++)
@@ -348,11 +507,11 @@ namespace opentk_cg
                         RenderObject(treeVAO, treeEBO, model, treeTextureID, modelLocation, indices2d);
                     }
                 }
-                tree1Z += 0.001f * timer.Exp();
-                tree2Z += 0.001f * timer.Exp();
-                tree3Z += 0.001f * timer.Exp();
-                tree4Z += 0.001f * timer.Exp();
-                tree5Z += 0.001f * timer.Exp();
+                //tree1Z += 0.005f * timer.Exp();
+                //tree2Z += 0.005f * timer.Exp();
+                //tree3Z += 0.005f * timer.Exp();
+                //tree4Z += 0.005f * timer.Exp();
+                //tree5Z += 0.005f * timer.Exp();
 
                 Context.SwapBuffers();
                 base.OnRenderFrame(args);
@@ -371,7 +530,6 @@ namespace opentk_cg
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
-            base.OnUpdateFrame(args);
             if (KeyboardState.IsKeyDown(Keys.Escape))
             {
                 Close();
@@ -388,16 +546,24 @@ namespace opentk_cg
                 tree3X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
                 tree4X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
                 tree5X = (float)rand.NextDouble() * (treeXMax - treeXMin) + treeXMin;
-                move.position.X = 0f;
+                move.Reset();
+                camera.Reset();
+                LevelCounter = 0;
                 isStuck = false;
                 isHit = false;
                 timer.Reset();
             }
-            MouseState mouse = MouseState;
+            //MouseState mouse = MouseState;
             KeyboardState input = KeyboardState;
+            MouseState mouse = MouseState;
             base.OnUpdateFrame(args);
+            //camera.Update(input, mouse, args);
             if (!isStuck)
-                move.Update(input, args);
+            {
+                move.Update(input, timer.Exp(), args);
+                camera.Update(timer.Exp());
+            }
+
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -434,10 +600,10 @@ namespace opentk_cg
             GL.BindTexture(TextureTarget.Texture2D, textureid); //Bind texture
 
             //Texture parameters
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
             //Load image
             StbImage.stbi_set_flip_vertically_on_load(1);
@@ -473,71 +639,28 @@ namespace opentk_cg
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ebo);
             GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
         }
-        
+
+        int loadCubemap(List<string> faces)
+        {
+            int textureID = GL.GenTexture();
+            GL.BindTexture(TextureTarget.TextureCubeMap, textureID);
+
+            for (int i = 0; i < faces.Count; i++)
+            {
+                StbImage.stbi_set_flip_vertically_on_load(0);
+                ImageResult skyboxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/Skybox/" + faces[i]), ColorComponents.RedGreenBlueAlpha);
+                GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, PixelInternalFormat.Rgba, skyboxTexture.Width, skyboxTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, skyboxTexture.Data);
+            }
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapS, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapT, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureWrapR, (int)TextureWrapMode.ClampToEdge);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.TextureCubeMap, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            GL.BindTexture(TextureTarget.TextureCubeMap, 0);
+            return textureID;
+        }
+
     }
 
-    public class Shader
-    {
-        public int shaderHandle;
-
-        public Shader() {}
-
-        public void LoadShader()
-        {
-            shaderHandle = GL.CreateProgram();
-
-            int vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShader, LoadShaderSource("shader.vert"));
-            GL.CompileShader(vertexShader);
-
-            int fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fragmentShader, LoadShaderSource("shader.frag"));
-            GL.CompileShader(fragmentShader);
-
-            GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out int success1);
-            if (success1 == 0)
-            {
-                string infoLog = GL.GetShaderInfoLog(vertexShader);
-                Console.WriteLine(infoLog);
-            }
-            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out int success2);
-            if (success2 == 0)
-            {
-                string infoLog = GL.GetShaderInfoLog(fragmentShader);
-                Console.WriteLine(infoLog);
-            }
-
-            GL.AttachShader(shaderHandle, vertexShader);
-            GL.AttachShader(shaderHandle, fragmentShader);
-
-            GL.LinkProgram(shaderHandle);
-
-            GL.DeleteShader(shaderHandle);
-        }
-
-        public static string LoadShaderSource(string filepath)
-        {
-            string shaderSource = "";
-            try
-            {
-                using (StreamReader reader = new StreamReader("../../../Shaders/" + filepath))
-                {
-                    shaderSource = reader.ReadToEnd();
-                }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Failed to load shader source file:" + e.Message);
-            }
-            return shaderSource;
-        }
-        public void UseShader()
-        {
-            GL.UseProgram(shaderHandle);
-        }
-        public void DeleteShader()
-        {
-            GL.DeleteProgram(shaderHandle);
-        }
-    }
 }
