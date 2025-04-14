@@ -30,13 +30,14 @@ namespace opentk_cg.Common
         private List<Mesh> meshes;
         string directory;
         private List<Texture> textures_loaded;  // stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
-
+        private Matrix4 transform;
 
         // Constructor, expects a filepath to a 3D model.
-        public Model(string path)
+        public Model(string path, Matrix4 transform)
         {
             // Initialize loaded textures
             textures_loaded = new List<Texture>();
+            this.transform = transform;
 
             loadModel(path);
         }
@@ -79,10 +80,10 @@ namespace opentk_cg.Common
             directory = path.Substring(0, path.LastIndexOf('/'));
 
             // Process ASSIMP's root node recursively. We pass in the scaling matrix as the first transform
-            Matrix4 transform = Matrix4.Identity;
-            transform *= Matrix4.CreateScale(1 / 35f);
-            transform *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90f));
-            transform *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(180f));
+            //Matrix4 transform = Matrix4.Identity;
+            //transform *= Matrix4.CreateScale(1 / 35f);
+            //transform *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90f));
+            //transform *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(180f));
             ProcessNode(scene.RootNode, scene, transform);
 
             // Once we are done with the importer, we release the resources since all the data we need

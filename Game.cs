@@ -223,8 +223,9 @@ namespace opentk_cg
 
         OpenALPlayer player;
 
-        Model catModel;
-        Shader catShader = new Shader();
+        Model catModel, orcModel, elfModel;
+        Shader modelShader = new Shader();
+        int playerNum = 1;
 
         int skyboxTexture, skyboxVAO, skyboxVBO;
         Shader skyboxShader = new Shader();
@@ -263,8 +264,23 @@ namespace opentk_cg
             Console.WriteLine(GL.GetString(StringName.Renderer));
             ErrorCode error = GL.GetError();
 
-            catModel = new Model("../../../Resources/Cat/cat.obj");
-            catShader.LoadShader("catShader.vert", "catShader.frag");
+            Matrix4 transform = Matrix4.Identity;
+            transform *= Matrix4.CreateScale(1 / 35f);
+            transform *= Matrix4.CreateRotationX(MathHelper.DegreesToRadians(-90f));
+            transform *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(180f));
+            catModel = new Model("../../../Resources/Cat/12221_Cat_v1_l3.obj", transform);
+
+            transform = Matrix4.Identity;
+            transform *= Matrix4.CreateScale(1 / 7f);
+            transform *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(180f));
+            orcModel = new Model("../../../Resources/Orc/Orc-A.obj", transform);
+
+            transform = Matrix4.Identity;
+            transform *= Matrix4.CreateScale(1 / 3f);
+            transform *= Matrix4.CreateRotationY(MathHelper.DegreesToRadians(180f));
+            elfModel = new Model("../../../Resources/Elf/ElfGirl.obj", transform);
+
+            modelShader.LoadShader("catShader.vert", "catShader.frag");
 
             //OnLoadRender(ref VAO,
             //             ref VBO,
@@ -349,7 +365,7 @@ namespace opentk_cg
             skyboxTexture = loadCubemap(faces);
 
             skyboxShader.LoadShader("skyboxShader.vert", "skyboxShader.frag");
-            //CursorState = CursorState.Grabbed;
+            CursorState = CursorState.Grabbed;
         }
 
         protected override void OnUnload()
@@ -360,7 +376,7 @@ namespace opentk_cg
             ClearObject(treeVAO, treeVBO, treeEBO, treeTextureID, treeTextureVBO);
             ClearObject(roadVAO, roadVBO, roadEBO, roadTextureID, roadTextureVBO);
             shaderProgram.DeleteShader();
-            catShader.DeleteShader();
+            modelShader.DeleteShader();
             skyboxShader.DeleteShader();
             player.StopPlayback();
         }
@@ -438,18 +454,29 @@ namespace opentk_cg
                 GL.DepthFunc(DepthFunction.Less);
 
                 //  render cat model
-                catShader.UseShader();
+                modelShader.UseShader();
 
-                int catModelLocation = GL.GetUniformLocation(catShader.shaderHandle, "model");
-                int catViewLocation = GL.GetUniformLocation(catShader.shaderHandle, "view");
-                int catProjectionLocation = GL.GetUniformLocation(catShader.shaderHandle, "projection");
+                int catModelLocation = GL.GetUniformLocation(modelShader.shaderHandle, "model");
+                int catViewLocation = GL.GetUniformLocation(modelShader.shaderHandle, "view");
+                int catProjectionLocation = GL.GetUniformLocation(modelShader.shaderHandle, "projection");
 
                 GL.UniformMatrix4(catViewLocation, true, ref view);
                 GL.UniformMatrix4(catProjectionLocation, true, ref projection);
 
                 model = move.GetModel();
                 GL.UniformMatrix4(catModelLocation, true, ref model);
-                catModel.Draw(catShader);
+                switch (playerNum)
+                {
+                    case 1:
+                        catModel.Draw(modelShader);
+                        break;
+                    case 2:
+                        orcModel.Draw(modelShader);
+                        break;
+                    case 3:
+                        elfModel.Draw(modelShader);
+                        break;
+                }
 
                 //  render everything else
                 shaderProgram.UseShader();
@@ -553,7 +580,18 @@ namespace opentk_cg
                 isHit = false;
                 timer.Reset();
             }
-            //MouseState mouse = MouseState;
+            if (KeyboardState.IsKeyDown(Keys.D1))
+            {
+                playerNum = 1;
+            }
+            else if (KeyboardState.IsKeyDown(Keys.D2))
+            {
+                playerNum = 2;
+            }
+            else if (KeyboardState.IsKeyDown(Keys.D3))
+            {
+                playerNum = 3;
+            }
             KeyboardState input = KeyboardState;
             MouseState mouse = MouseState;
             base.OnUpdateFrame(args);
